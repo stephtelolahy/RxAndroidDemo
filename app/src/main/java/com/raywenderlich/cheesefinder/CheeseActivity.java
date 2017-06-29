@@ -43,6 +43,13 @@ public class CheeseActivity extends BaseSearchActivity {
 
         Observable<String> searchTextObservable = createButtonClickObservable();
         searchTextObservable
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnNext(new Consumer<String>() {
+                    @Override
+                    public void accept(String s) throws Exception {
+                        showProgressBar();
+                    }
+                })
                 .observeOn(Schedulers.io())
                 .map(new Function<String, List<String>>() {
                     @Override
@@ -54,6 +61,7 @@ public class CheeseActivity extends BaseSearchActivity {
                 .subscribe(new Consumer<List<String>>() {
                     @Override
                     public void accept(List<String> result) {
+                        hideProgressBar();
                         showResult(result);
                     }
                 });
