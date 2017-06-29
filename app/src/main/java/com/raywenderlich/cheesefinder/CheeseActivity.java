@@ -22,6 +22,8 @@
 
 package com.raywenderlich.cheesefinder;
 
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 
 import java.util.List;
@@ -41,7 +43,7 @@ public class CheeseActivity extends BaseSearchActivity {
     protected void onStart() {
         super.onStart();
 
-        Observable<String> searchTextObservable = createButtonClickObservable();
+        Observable<String> searchTextObservable = createTextChangeObservable();
         searchTextObservable
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnNext(new Consumer<String>() {
@@ -92,4 +94,36 @@ public class CheeseActivity extends BaseSearchActivity {
         });
     }
 
+    private Observable<String> createTextChangeObservable() {
+
+        return Observable.create(new ObservableOnSubscribe<String>() {
+            @Override
+            public void subscribe(final ObservableEmitter<String> emitter) throws Exception {
+                final TextWatcher watcher = new TextWatcher() {
+                    @Override
+                    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+                    }
+
+                    @Override
+                    public void onTextChanged(CharSequence s, int start, int before, int count) {
+                        emitter.onNext(s.toString());
+                    }
+
+                    @Override
+                    public void afterTextChanged(Editable s) {
+
+                    }
+                };
+                mQueryEditText.addTextChangedListener(watcher);
+
+                emitter.setCancellable(new Cancellable() {
+                    @Override
+                    public void cancel() throws Exception {
+                        mQueryEditText.removeTextChangedListener(watcher);
+                    }
+                });
+            }
+        });
+    }
 }
