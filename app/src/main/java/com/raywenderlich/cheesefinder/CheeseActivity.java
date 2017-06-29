@@ -24,11 +24,16 @@ package com.raywenderlich.cheesefinder;
 
 import android.view.View;
 
+import java.util.List;
+
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Cancellable;
 import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
+import io.reactivex.schedulers.Schedulers;
 
 public class CheeseActivity extends BaseSearchActivity {
 
@@ -37,12 +42,21 @@ public class CheeseActivity extends BaseSearchActivity {
         super.onStart();
 
         Observable<String> searchTextObservable = createButtonClickObservable();
-        searchTextObservable.subscribe(new Consumer<String>() {
-            @Override
-            public void accept(String query) throws Exception {
-                showResult(mCheeseSearchEngine.search(query));
-            }
-        });
+        searchTextObservable
+                .observeOn(Schedulers.io())
+                .map(new Function<String, List<String>>() {
+                    @Override
+                    public List<String> apply(String query) {
+                        return mCheeseSearchEngine.search(query);
+                    }
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<List<String>>() {
+                    @Override
+                    public void accept(List<String> result) {
+                        showResult(result);
+                    }
+                });
     }
 
     private Observable<String> createButtonClickObservable() {
@@ -52,7 +66,7 @@ public class CheeseActivity extends BaseSearchActivity {
             @Override
             public void subscribe(final ObservableEmitter<String> emitter) throws Exception {
 
-                mSearchButton.setOnClickListener(new View.OnClickListener(){
+                mSearchButton.setOnClickListener(new View.OnClickListener() {
 
                     @Override
                     public void onClick(View v) {
